@@ -1,0 +1,47 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Android: Assemble Debug",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"assembleDebug"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Android: ADB Devices",
+			"type": "shell",
+			"command": "/Users/richardgraham/Library/Android/sdk/platform-tools/adb",
+			"args": [
+				"devices",
+				"-l"
+			],
+			"isBackground": false,
+			"group": "test"
+		},
+		{
+			"label": "Android: Install Debug",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"installDebug"
+			],
+			"isBackground": false,
+			"group": "test"
+		},
+		{
+			"label": "Android: ADB Devices",
+			"type": "shell",
+			"command": "/Users/richardgraham/Library/Android/sdk/platform-tools/adb",
+			"args": [
+				"devices",
+				"-l"
+			],
+			"isBackground": false,
+			"group": "test"
+		}
+	]
+}

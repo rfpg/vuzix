@@ -1,0 +1,15 @@
+# Gradle
+.gradle/
+build/
+*/build/
+
+# Local SDK config
+local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+captures/
+
+# macOS
+.DS_Store
