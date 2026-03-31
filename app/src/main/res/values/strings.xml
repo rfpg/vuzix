@@ -1,5 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Vuzix Blade Hello</string>
-    <string name="hello_world">Hello, Vuzix Blade</string>
+    <string name="finger_count_default">Fingers: 0</string>
+    <string name="finger_count_format">Fingers: %1$d</string>
+    <string name="status_starting">Starting camera…</string>
+    <string name="status_need_camera_permission">Camera permission is required.</string>
+    <string name="status_detecting">Detecting fingers…</string>
+    <string name="status_no_hand">No hand detected.</string>
+    <string name="status_tracking">Hand tracked.</string>
+    <string name="status_camera_error">Camera unavailable.</string>
+    <string name="status_detection_error">Detection error.</string>
+    <string name="status_voice_unavailable">Voice recognition unavailable.</string>
+    <string name="status_voice_permission_needed">Microphone permission is required for voice reset.</string>
+    <string name="status_voice_reset_done">Checklist reset.</string>
+    <string name="status_voice_listening">Listening for "reset checklist".</string>
+    <string name="voice_debug_default">Voice debug: waiting…</string>
+    <string name="voice_debug_heard">Heard: %1$s</string>
+    <string name="voice_debug_error">Voice error: %1$s</string>
+    <string name="voice_debug_intent">Intent: %1$s | %2$s</string>
+    <string name="voice_debug_manual">Manual reset button pressed.</string>
+    <string name="checklist_title">Checklist</string>
+    <string name="check_one">1 finger</string>
+    <string name="check_two">2 fingers</string>
+    <string name="check_three">3 fingers</string>
+    <string name="check_four">4 fingers</string>
+    <string name="check_five">5 fingers</string>
+    <string name="reset_touch_action">Reset Checklist</string>
 </resources>
