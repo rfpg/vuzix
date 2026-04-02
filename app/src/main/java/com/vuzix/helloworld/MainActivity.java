@@ -63,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int COUNT_SMOOTHING_WINDOW = 5;
     private static final long VOICE_RESET_COOLDOWN_MS = 1500L;
     private static final long RESET_VISIBILITY_HOLD_MS = 2000L;
+    private static final int FIST_STABLE_FRAMES = 3;
+    private static final long FIST_RESET_COOLDOWN_MS = 3000L;
     private static final String VUZIX_SPEECH_PACKAGE = "com.vuzix.speechrecognitionservice";
 
     private PreviewView cameraPreview;
@@ -87,6 +89,8 @@ public class MainActivity extends AppCompatActivity {
     private int stableFrameCount = 0;
     private long lastVoiceResetTimestampMs = 0L;
     private long ignoreFingerUpdatesUntilMs = 0L;
+    private int stableFistFrameCount = 0;
+    private long lastFistResetTimestampMs = 0L;
     private final ArrayDeque<Integer> recentFingerCounts = new ArrayDeque<>();
 
     @Override
@@ -461,6 +465,7 @@ public class MainActivity extends AppCompatActivity {
         currentFingerCount = 0;
         lastRawFingerCount = -1;
         stableFrameCount = 0;
+        stableFistFrameCount = 0;
         recentFingerCounts.clear();
         ignoreFingerUpdatesUntilMs = System.currentTimeMillis() + RESET_VISIBILITY_HOLD_MS;
         updateCounterText();
@@ -525,7 +530,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             HandLandmarkerResult result = handLandmarker.detect(mpImage);
             int rawFingerCount = extractFingerCount(result);
-            runOnUiThread(() -> updateFingerCountState(rawFingerCount));
+            boolean fist = isFistGesture(result);
+            runOnUiThread(() -> updateFingerCountState(rawFingerCount, fist));
         } catch (Exception exception) {
             runOnUiThread(() -> statusText.setText(R.string.status_detection_error));
         } finally {
@@ -533,9 +539,26 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void updateFingerCountState(int rawFingerCount) {
+    private void updateFingerCountState(int rawFingerCount, boolean isFist) {
         if (System.currentTimeMillis() < ignoreFingerUpdatesUntilMs) {
+            stableFistFrameCount = 0;
             return;
+        }
+
+        long nowMs = System.currentTimeMillis();
+        if (isFist) {
+            if (stableFistFrameCount < FIST_STABLE_FRAMES) {
+                stableFistFrameCount++;
+            }
+            if (stableFistFrameCount >= FIST_STABLE_FRAMES
+                    && nowMs - lastFistResetTimestampMs >= FIST_RESET_COOLDOWN_MS) {
+                lastFistResetTimestampMs = nowMs;
+                stableFistFrameCount = 0;
+                resetChecklist();
+                return;
+            }
+        } else {
+            stableFistFrameCount = 0;
         }
 
         int filteredFingerCount = getSmoothedFingerCount(rawFingerCount);
@@ -637,6 +660,21 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return fingerCount;
+    }
+
+    private boolean isFistGesture(@NonNull HandLandmarkerResult result) {
+        if (result.landmarks().isEmpty()) {
+            return false;
+        }
+        List<NormalizedLandmark> handLandmarks = result.landmarks().get(0);
+        if (handLandmarks.size() < 21) {
+            return false;
+        }
+        return !isThumbExtended(handLandmarks)
+                && !isFingerExtended(handLandmarks, 8, 6)
+                && !isFingerExtended(handLandmarks, 12, 10)
+                && !isFingerExtended(handLandmarks, 16, 14)
+                && !isFingerExtended(handLandmarks, 20, 18);
     }
 
     private boolean isFingerExtended(List<NormalizedLandmark> landmarks, int tipIndex, int pipIndex) {
