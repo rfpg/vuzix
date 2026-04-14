@@ -19,6 +19,7 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
+import android.util.Size;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TextView;
@@ -60,9 +61,11 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "FingerCounter";
     private static final int APP_PERMISSION_REQUEST_CODE = 1001;
     private static final int REQUIRED_STABLE_FRAMES = 2;
-    private static final int COUNT_SMOOTHING_WINDOW = 5;
+    private static final int COUNT_SMOOTHING_WINDOW = 3;
+    private static final int ANALYZE_EVERY_N_FRAMES = 2;
+    private static final Size ANALYSIS_RESOLUTION = new Size(640, 480);
     private static final long VOICE_RESET_COOLDOWN_MS = 1500L;
-    private static final long RESET_VISIBILITY_HOLD_MS = 2000L;
+    private static final long RESET_VISIBILITY_HOLD_MS = 1200L;
     private static final int FIST_STABLE_FRAMES = 3;
     private static final long FIST_RESET_COOLDOWN_MS = 3000L;
     private static final String VUZIX_SPEECH_PACKAGE = "com.vuzix.speechrecognitionservice";
@@ -70,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
     private PreviewView cameraPreview;
     private TextView fingerCountText;
     private TextView statusText;
-    private TextView voiceDebugText;
+    private TextView buildVersionText;
     private Button resetChecklistButton;
 
     private final Map<Integer, CheckBox> fingerChecklistMap = new HashMap<>();
@@ -91,6 +94,8 @@ public class MainActivity extends AppCompatActivity {
     private long ignoreFingerUpdatesUntilMs = 0L;
     private int stableFistFrameCount = 0;
     private long lastFistResetTimestampMs = 0L;
+    private int analysisFrameCounter = 0;
+    private int lastStatusTextResId = 0;
     private final ArrayDeque<Integer> recentFingerCounts = new ArrayDeque<>();
 
     @Override
@@ -101,10 +106,11 @@ public class MainActivity extends AppCompatActivity {
         cameraPreview = findViewById(R.id.cameraPreview);
         fingerCountText = findViewById(R.id.fingerCountText);
         statusText = findViewById(R.id.statusText);
-        voiceDebugText = findViewById(R.id.voiceDebugText);
+        buildVersionText = findViewById(R.id.buildVersionText);
         resetChecklistButton = findViewById(R.id.resetChecklistButton);
         initializeChecklistMap();
         initializeTouchActions();
+        initializeBuildVersionText();
 
         cameraExecutor = Executors.newSingleThreadExecutor();
 
@@ -139,7 +145,6 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        String action = intent.getAction();
         String phrase = extractVoicePhraseFromIntent(intent);
         if (phrase == null || phrase.isEmpty()) {
             return;
@@ -150,12 +155,6 @@ public class MainActivity extends AppCompatActivity {
                 .replaceAll("[^a-z0-9 ]", "")
                 .replaceAll("\\s+", " ")
                 .trim();
-
-        updateVoiceDebugText(getString(
-                R.string.voice_debug_intent,
-                action == null ? "(no-action)" : action,
-                normalized
-        ));
 
         if (isResetChecklistCommand(normalized)) {
             lastVoiceResetTimestampMs = System.currentTimeMillis();
@@ -201,9 +200,21 @@ public class MainActivity extends AppCompatActivity {
     private void initializeTouchActions() {
         if (resetChecklistButton != null) {
             resetChecklistButton.setOnClickListener(view -> {
-                updateVoiceDebugText(getString(R.string.voice_debug_manual));
                 resetChecklist();
             });
+        }
+    }
+
+    private void initializeBuildVersionText() {
+        if (buildVersionText == null) {
+            return;
+        }
+        try {
+            String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            long versionCode = getPackageManager().getPackageInfo(getPackageName(), 0).getLongVersionCode();
+            buildVersionText.setText(getString(R.string.build_version_format, versionName, versionCode));
+        } catch (Exception exception) {
+            buildVersionText.setText(R.string.build_version_placeholder);
         }
     }
 
@@ -242,14 +253,14 @@ public class MainActivity extends AppCompatActivity {
 
             handLandmarker = HandLandmarker.createFromOptions(this, options);
         } catch (Exception exception) {
-            statusText.setText(R.string.status_detection_error);
+            setStatusTextIfChanged(R.string.status_detection_error);
             Log.e(TAG, "Failed to initialize hand landmarker", exception);
         }
     }
 
     private void initializeVoiceRecognizer() {
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            statusText.setText(R.string.status_voice_unavailable);
+            setStatusTextIfChanged(R.string.status_voice_unavailable);
             return;
         }
 
@@ -267,7 +278,6 @@ public class MainActivity extends AppCompatActivity {
             public void onReadyForSpeech(Bundle params) {
                 isVoiceListening = true;
                 consecutiveVoiceErrors = 0;
-                updateVoiceDebugText(getString(R.string.status_voice_listening));
             }
 
             @Override
@@ -292,7 +302,6 @@ public class MainActivity extends AppCompatActivity {
                 isVoiceListening = false;
                 consecutiveVoiceErrors++;
                 Log.w(TAG, "Speech recognizer error: " + error);
-                updateVoiceDebugText(getString(R.string.voice_debug_error, formatSpeechError(error)));
 
                 if (error == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) {
                     Toast.makeText(MainActivity.this, R.string.status_voice_permission_needed, Toast.LENGTH_SHORT).show();
@@ -406,44 +415,12 @@ public class MainActivity extends AppCompatActivity {
                     .replaceAll("\\s+", " ")
                     .trim();
             Log.i(TAG, "Voice phrase: " + normalized);
-            updateVoiceDebugText(getString(R.string.voice_debug_heard, normalized));
 
             if (isResetChecklistCommand(normalized)) {
                 lastVoiceResetTimestampMs = nowMs;
                 resetChecklist();
                 break;
             }
-        }
-    }
-
-    private void updateVoiceDebugText(String message) {
-        if (voiceDebugText != null) {
-            voiceDebugText.setText(message);
-        }
-    }
-
-    private String formatSpeechError(int error) {
-        switch (error) {
-            case SpeechRecognizer.ERROR_AUDIO:
-                return "AUDIO";
-            case SpeechRecognizer.ERROR_CLIENT:
-                return "CLIENT";
-            case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
-                return "INSUFFICIENT_PERMISSIONS";
-            case SpeechRecognizer.ERROR_NETWORK:
-                return "NETWORK";
-            case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
-                return "NETWORK_TIMEOUT";
-            case SpeechRecognizer.ERROR_NO_MATCH:
-                return "NO_MATCH";
-            case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
-                return "RECOGNIZER_BUSY";
-            case SpeechRecognizer.ERROR_SERVER:
-                return "SERVER";
-            case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
-                return "SPEECH_TIMEOUT";
-            default:
-                return "CODE_" + error;
         }
     }
 
@@ -473,7 +450,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startCamera() {
-        statusText.setText(R.string.status_detecting);
+        setStatusTextIfChanged(R.string.status_detecting);
 
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture =
                 ProcessCameraProvider.getInstance(this);
@@ -483,7 +460,7 @@ public class MainActivity extends AppCompatActivity {
                 processCameraProvider = cameraProviderFuture.get();
                 bindCameraUseCases();
             } catch (ExecutionException | InterruptedException exception) {
-                statusText.setText(R.string.status_camera_error);
+                setStatusTextIfChanged(R.string.status_camera_error);
             }
         }, ContextCompat.getMainExecutor(this));
     }
@@ -497,6 +474,7 @@ public class MainActivity extends AppCompatActivity {
         preview.setSurfaceProvider(cameraPreview.getSurfaceProvider());
 
         ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
+            .setTargetResolution(ANALYSIS_RESOLUTION)
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
 
@@ -508,11 +486,17 @@ public class MainActivity extends AppCompatActivity {
         try {
             processCameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalysis);
         } catch (Exception exception) {
-            statusText.setText(R.string.status_camera_error);
+            setStatusTextIfChanged(R.string.status_camera_error);
         }
     }
 
     private void analyzeImage(@NonNull ImageProxy imageProxy) {
+        analysisFrameCounter++;
+        if (analysisFrameCounter % ANALYZE_EVERY_N_FRAMES != 0) {
+            imageProxy.close();
+            return;
+        }
+
         if (handLandmarker == null) {
             imageProxy.close();
             return;
@@ -533,7 +517,7 @@ public class MainActivity extends AppCompatActivity {
             boolean fist = isFistGesture(result);
             runOnUiThread(() -> updateFingerCountState(rawFingerCount, fist));
         } catch (Exception exception) {
-            runOnUiThread(() -> statusText.setText(R.string.status_detection_error));
+            runOnUiThread(() -> setStatusTextIfChanged(R.string.status_detection_error));
         } finally {
             imageProxy.close();
         }
@@ -564,9 +548,9 @@ public class MainActivity extends AppCompatActivity {
         int filteredFingerCount = getSmoothedFingerCount(rawFingerCount);
 
         if (filteredFingerCount > 0) {
-            statusText.setText(R.string.status_tracking);
+            setStatusTextIfChanged(R.string.status_tracking);
         } else {
-            statusText.setText(R.string.status_no_hand);
+            setStatusTextIfChanged(R.string.status_no_hand);
         }
 
         if (filteredFingerCount == lastRawFingerCount) {
@@ -721,9 +705,17 @@ public class MainActivity extends AppCompatActivity {
 
         YuvImage yuvImage = new YuvImage(nv21, ImageFormat.NV21, imageProxy.getWidth(), imageProxy.getHeight(), null);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        yuvImage.compressToJpeg(new Rect(0, 0, imageProxy.getWidth(), imageProxy.getHeight()), 80, out);
+        yuvImage.compressToJpeg(new Rect(0, 0, imageProxy.getWidth(), imageProxy.getHeight()), 70, out);
         byte[] imageBytes = out.toByteArray();
         return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+    }
+
+    private void setStatusTextIfChanged(int resId) {
+        if (lastStatusTextResId == resId) {
+            return;
+        }
+        lastStatusTextResId = resId;
+        statusText.setText(resId);
     }
 
     private byte[] yuv420ToNv21(ImageProxy imageProxy) {
@@ -788,7 +780,7 @@ public class MainActivity extends AppCompatActivity {
         if (hasCameraPermission()) {
             startCamera();
         } else {
-            statusText.setText(R.string.status_need_camera_permission);
+            setStatusTextIfChanged(R.string.status_need_camera_permission);
         }
 
         if (hasAudioPermission()) {

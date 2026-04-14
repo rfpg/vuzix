@@ -19,7 +19,7 @@
         android:layout_height="wrap_content"
         android:background="#99000000"
         android:orientation="vertical"
-        android:padding="16dp"
+        android:padding="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -30,92 +30,124 @@
             android:layout_height="wrap_content"
             android:text="@string/finger_count_default"
             android:textColor="@android:color/white"
-            android:textSize="24sp"
+            android:textSize="20sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/statusText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="4dp"
             android:text="@string/status_starting"
             android:textColor="@android:color/white"
-            android:textSize="16sp" />
+            android:textSize="14sp" />
 
         <TextView
-            android:id="@+id/voiceDebugText"
+            android:id="@+id/buildVersionText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/voice_debug_default"
+            android:layout_marginTop="4dp"
+            android:text="@string/build_version_placeholder"
             android:textColor="@android:color/white"
-            android:textSize="14sp" />
+            android:textSize="11sp" />
 
         <TextView
             android:id="@+id/checklistTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="6dp"
             android:text="@string/checklist_title"
             android:textColor="@android:color/white"
             android:textStyle="bold" />
 
-        <CheckBox
-            android:id="@+id/checkOne"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:checked="false"
-            android:clickable="false"
-            android:focusable="false"
-            android:text="@string/check_one"
-            android:textColor="@android:color/white" />
+            android:orientation="horizontal">
 
-        <CheckBox
-            android:id="@+id/checkTwo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="false"
-            android:clickable="false"
-            android:focusable="false"
-            android:text="@string/check_two"
-            android:textColor="@android:color/white" />
+            <CheckBox
+                android:id="@+id/checkOne"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="false"
+                android:clickable="false"
+                android:focusable="false"
+                android:minHeight="0dp"
+                android:text="@string/check_one"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
 
-        <CheckBox
-            android:id="@+id/checkThree"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="false"
-            android:clickable="false"
-            android:focusable="false"
-            android:text="@string/check_three"
-            android:textColor="@android:color/white" />
+            <CheckBox
+                android:id="@+id/checkTwo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="false"
+                android:clickable="false"
+                android:focusable="false"
+                android:layout_marginStart="8dp"
+                android:minHeight="0dp"
+                android:text="@string/check_two"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
 
-        <CheckBox
-            android:id="@+id/checkFour"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="false"
-            android:clickable="false"
-            android:focusable="false"
-            android:text="@string/check_four"
-            android:textColor="@android:color/white" />
+            <CheckBox
+                android:id="@+id/checkThree"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="false"
+                android:clickable="false"
+                android:focusable="false"
+                android:layout_marginStart="8dp"
+                android:minHeight="0dp"
+                android:text="@string/check_three"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+        </LinearLayout>
 
-        <CheckBox
-            android:id="@+id/checkFive"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:checked="false"
-            android:clickable="false"
-            android:focusable="false"
-            android:text="@string/check_five"
-            android:textColor="@android:color/white" />
+            android:layout_marginTop="2dp"
+            android:orientation="horizontal">
+
+            <CheckBox
+                android:id="@+id/checkFour"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="false"
+                android:clickable="false"
+                android:focusable="false"
+                android:minHeight="0dp"
+                android:text="@string/check_four"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+
+            <CheckBox
+                android:id="@+id/checkFive"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="false"
+                android:clickable="false"
+                android:focusable="false"
+                android:layout_marginStart="8dp"
+                android:minHeight="0dp"
+                android:text="@string/check_five"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+        </LinearLayout>
 
         <Button
             android:id="@+id/resetChecklistButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/reset_touch_action" />
+            android:layout_marginTop="6dp"
+            android:minHeight="0dp"
+            android:paddingLeft="10dp"
+            android:paddingTop="4dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="4dp"
+            android:text="@string/reset_touch_action"
+            android:textSize="12sp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -14,16 +14,13 @@
     <string name="status_voice_permission_needed">Microphone permission is required for voice reset.</string>
     <string name="status_voice_reset_done">Checklist reset.</string>
     <string name="status_voice_listening">Listening for "reset checklist".</string>
-    <string name="voice_debug_default">Voice debug: waiting…</string>
-    <string name="voice_debug_heard">Heard: %1$s</string>
-    <string name="voice_debug_error">Voice error: %1$s</string>
-    <string name="voice_debug_intent">Intent: %1$s | %2$s</string>
-    <string name="voice_debug_manual">Manual reset button pressed.</string>
+    <string name="build_version_placeholder">Build: --</string>
+    <string name="build_version_format">Build %1$s (%2$d)</string>
     <string name="checklist_title">Checklist</string>
-    <string name="check_one">1 finger</string>
-    <string name="check_two">2 fingers</string>
-    <string name="check_three">3 fingers</string>
-    <string name="check_four">4 fingers</string>
-    <string name="check_five">5 fingers</string>
+    <string name="check_one">1</string>
+    <string name="check_two">2</string>
+    <string name="check_three">3</string>
+    <string name="check_four">4</string>
+    <string name="check_five">5</string>
     <string name="reset_touch_action">Reset Checklist</string>
 </resources>
